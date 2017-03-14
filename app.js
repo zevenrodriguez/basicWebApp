@@ -18,7 +18,7 @@ const server = new Hapi.Server({
 });
 
 server.connection({
-    port: 3000
+    port: (process.env.PORT || 5000)
 });
 
 server.register([Blipp, Inert, Vision], () => {});
