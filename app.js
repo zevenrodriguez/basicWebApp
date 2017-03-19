@@ -6,6 +6,8 @@ const Vision = require('vision');
 const Inert = require('inert');
 const Path = require('path');
 const Handlebars = require('handlebars');
+const Sequelize = require('sequelize');
+
 
 const server = new Hapi.Server({
     connections: {
@@ -18,7 +20,44 @@ const server = new Hapi.Server({
 });
 
 server.connection({
-    port: (process.env.PORT || 5000)
+    port: (process.env.PORT || 3000)
+});
+
+
+var sequelize = new Sequelize('db', 'username', 'password', {
+    host: 'localhost',
+    dialect: 'sqlite',
+
+    pool: {
+        max: 5,
+        min: 0,
+        idle: 10000
+    },
+
+    // SQLite only
+    storage: 'db.sqlite'
+});
+
+//
+//  if (process.env.HEROKU_POSTGRESQL_BRONZE_URL) {
+//    // the application is executed on Heroku ... use the postgres database
+//    sequelize = new Sequelize(process.env.HEROKU_POSTGRESQL_BRONZE_URL, {
+//      dialect:  'postgres',
+//      protocol: 'postgres',
+//      port:     match[4],
+//      host:     match[3],
+//      logging:  true //false
+//    })
+//  } else {
+//    // the application is executed on the local machine ... use mysql
+//    sequelize = new Sequelize('example-app-db', 'root', null)
+//  }
+
+
+var Users = sequelize.define('user', {
+    username: {
+        type: Sequelize.STRING
+    }
 });
 
 server.register([Blipp, Inert, Vision], () => {});
@@ -30,7 +69,7 @@ server.views({
     path: 'views',
     layoutPath: 'views/layout',
     layout: 'layout',
-    //helpersPath: 'views/helpers',
+    helpersPath: 'views/helpers',
     //partialsPath: 'views/partials'
 });
 
@@ -63,13 +102,46 @@ server.route({
     method: 'POST',
     path: '/form',
     handler: function (request, reply) {
-        console.log(request.payload.firstname);
-        var firstname = encodeURIComponent(request.payload.firstname);
-        reply.view('formresponse', {
-            firstname: firstname,
+        var formresponse = request.payload;
+        Users.create(formresponse).then(function (currentUser) {
+            Users.sync();
+            console.log("...syncing");
+            console.log(currentUser);
+            return (currentUser);
+        }).then(function (currentUser) {
+
+            reply().redirect("/displayAll");
+
         });
     }
 
+});
+
+server.route({
+    method: 'GET',
+    path: '/createDB',
+    handler: function (request, reply) {
+        // force: true will drop the table if it already exists
+        Users.sync({
+            force: true
+        })
+        reply("Database Created")
+    }
+});
+
+server.route({
+    method: 'GET',
+    path: '/displayAll',
+    handler: function (request, reply) {
+        Users.findAll().then(function (users) {
+            // projects will be an array of all User instances
+            //console.log(users[0].monsterName);
+            var allUsers = JSON.stringify(users);
+            reply.view('dbresponse', {
+                dbresponse: allUsers
+            });
+        });
+    }
 });
 
 server.start((err) => {
