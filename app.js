@@ -7,6 +7,7 @@ const Inert = require('inert');
 const Path = require('path');
 const Handlebars = require('handlebars');
 const Sequelize = require('sequelize');
+const pg = require('pg');
 
 
 const server = new Hapi.Server({
@@ -28,7 +29,7 @@ server.connection({
 });
 
 
-if (process.env.HEROKU_POSTGRESQL_BRONZE_URL) {
+if (process.env.DATABASE_URL) {
     // the application is executed on Heroku ... use the postgres database
     sequelize = new Sequelize(process.env.HEROKU_POSTGRESQL_BRONZE_URL, {
         dialect: 'postgres',
