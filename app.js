@@ -31,7 +31,7 @@ server.connection({
 
 if (process.env.DATABASE_URL) {
     // the application is executed on Heroku ... use the postgres database
-    sequelize = new Sequelize(process.env.HEROKU_POSTGRESQL_BRONZE_URL, {
+    sequelize = new Sequelize(process.env.DATABASE_URL, {
         dialect: 'postgres',
         protocol: 'postgres',
         port: match[4],
