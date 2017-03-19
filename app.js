@@ -19,39 +19,39 @@ const server = new Hapi.Server({
     }
 });
 
+
+var sequelize;
+
+
 server.connection({
     port: (process.env.PORT || 3000)
 });
 
 
-var sequelize = new Sequelize('db', 'username', 'password', {
-    host: 'localhost',
-    dialect: 'sqlite',
+if (process.env.HEROKU_POSTGRESQL_BRONZE_URL) {
+    // the application is executed on Heroku ... use the postgres database
+    sequelize = new Sequelize(process.env.HEROKU_POSTGRESQL_BRONZE_URL, {
+        dialect: 'postgres',
+        protocol: 'postgres',
+        port: match[4],
+        host: match[3],
+        logging: true //false
+    })
+} else {
+    sequelize = new Sequelize('db', 'username', 'password', {
+        host: 'localhost',
+        dialect: 'sqlite',
 
-    pool: {
-        max: 5,
-        min: 0,
-        idle: 10000
-    },
+        pool: {
+            max: 5,
+            min: 0,
+            idle: 10000
+        },
 
-    // SQLite only
-    storage: 'db.sqlite'
-});
-
-//
-//  if (process.env.HEROKU_POSTGRESQL_BRONZE_URL) {
-//    // the application is executed on Heroku ... use the postgres database
-//    sequelize = new Sequelize(process.env.HEROKU_POSTGRESQL_BRONZE_URL, {
-//      dialect:  'postgres',
-//      protocol: 'postgres',
-//      port:     match[4],
-//      host:     match[3],
-//      logging:  true //false
-//    })
-//  } else {
-//    // the application is executed on the local machine ... use mysql
-//    sequelize = new Sequelize('example-app-db', 'root', null)
-//  }
+        // SQLite only
+        storage: 'db.sqlite'
+    });
+}
 
 
 var Users = sequelize.define('user', {
